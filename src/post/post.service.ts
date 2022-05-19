@@ -43,31 +43,36 @@ export class PostService {
     }
 
     if(searchPostDto.body){
-      qb.where(`post.body ILIKE '%${searchPostDto.body}%'`)
+      qb.andWhere(`post.body ILIKE '%${searchPostDto.body}%'`)
     }
 
     if(searchPostDto.title){
-      qb.where(`post.title LIKE '%${searchPostDto.title}%'`)
+      qb.andWhere(`post.title LIKE '%${searchPostDto.title}%'`)
     }
 
     if(searchPostDto.tags){
-      qb.where(`post.tags ILIKE :tags`)
+      qb.andWhere(`post.tags ILIKE :tags`) 
     }
 
     qb.setParameters({
-      tags: `%${searchPostDto.tags}%` 
-    }) 
+      tags: `%${searchPostDto.tags}%`,
+      views: searchPostDto.views || 'DESC'
+    }) // note!
 
     const [items, total] = await qb.getManyAndCount()
     return {items, total}
   }
 
-  findOne(id: number) {
-    const find = this.postRepository.findOne(id)
-   if(!find){
-     throw new NotFoundException('post not found')
-   }
-    return find
+  async findOne(id: number) {
+    await this.postRepository
+    .createQueryBuilder('post_entity')
+    .whereInIds(id)
+    .update()
+    .set({
+      views:() => 'views +1'
+    })
+    .execute()
+    return this.postRepository.findOne(id)
   }
 
  update(id: number, updatePostDto: UpdatePostDto) {
