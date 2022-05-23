@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOneOptions, Repository } from 'typeorm';
+import { NotFoundError } from 'rxjs';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -12,7 +13,7 @@ export class UserService {
   constructor(
     @InjectRepository(UserEntity)//Здесь хоантся код для userRepository
     private readonly userRepository: Repository<UserEntity>//crud is enabled in userRepository
-  ) {}
+  ) { }
   create(createUserDto: CreateUserDto) {
     return this.userRepository.save(createUserDto)
   }
@@ -30,7 +31,11 @@ export class UserService {
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+    const find = this.userRepository.findOne(id)
+    if(!find){
+      throw new NotFoundException('user not found')
+    }
+    return this.userRepository.update(id, updateUserDto)
   }
 
   remove(id: number) {

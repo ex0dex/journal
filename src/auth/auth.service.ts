@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt'
 import { UserEntity } from 'src/user/entities/user.entity';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -10,6 +11,7 @@ export class AuthService {
     private  userService:UserService,
     private jwtService:JwtService
     ){}
+
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userService.findByCond({
       email, password
@@ -20,13 +22,34 @@ export class AuthService {
     }
     return null;
   }
+  // async generateJwt(data:{id:number, email:string, fullName:string}){
+  //   const payload = { email: data.email, fullName:data.fullName, sub: data.id,}
+  //   return {
+  //     token: this.jwtService.sign(payload)
+  //   }
+  // }
 
   async login(user: UserEntity) {
     const{password, ...userData} = user
-    const payload = { email: user.email, sub: user.id };
     return {
       ...userData,
-      access_token: this.jwtService.sign(payload),
+      token: this.jwtService.sign(userData)
     };
   }
+
+
+  async registration(createUserDto: CreateUserDto){
+    try {
+      const {password, ...user} = await this.userService.create(createUserDto)
+      // console.log(this.generateJwt(user))
+      return{
+        ...user,
+        token: this.jwtService.sign(user)
+      }
+    } catch (error) {
+      throw new ForbiddenException("User is Exists")
+    }
+  }
+
 }
+

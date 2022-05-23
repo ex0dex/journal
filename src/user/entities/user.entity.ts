@@ -8,11 +8,13 @@ export class UserEntity {
   @Column()
   fullName: string;
 
-  @Column()
+  @Column({
+    unique:true
+  })
   email: string;
 
   @Column()
-  password: string;
+  password: string; 
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date
