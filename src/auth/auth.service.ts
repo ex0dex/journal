@@ -22,29 +22,28 @@ export class AuthService {
     }
     return null;
   }
-  // async generateJwt(data:{id:number, email:string, fullName:string}){
-  //   const payload = { email: data.email, fullName:data.fullName, sub: data.id,}
-  //   return {
-  //     token: this.jwtService.sign(payload)
-  //   }
-  // }
+    async generateJwt(data:{id:number, email:string, fullName:string}){
+    const payload = { email: data.email, fullName:data.fullName, sub: data.id,}
+    return {
+      token: await this.jwtService.sign(payload)
+    }
+  }
 
   async login(user: UserEntity) {
     const{password, ...userData} = user
     return {
       ...userData,
-      token: this.jwtService.sign(userData)
+      token: await this.generateJwt(userData)
     };
   }
-
 
   async registration(createUserDto: CreateUserDto){
     try {
       const {password, ...user} = await this.userService.create(createUserDto)
-      // console.log(this.generateJwt(user))
+      console.log(this.generateJwt(user))
       return{
         ...user,
-        token: this.jwtService.sign(user)
+        token: await this.jwtService.sign(user)
       }
     } catch (error) {
       throw new ForbiddenException("User is Exists")

@@ -4,6 +4,7 @@ import { NotFoundError } from 'rxjs';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { SearchUserDto } from './dto/search-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 
@@ -28,6 +29,27 @@ export class UserService {
 
   findByCond(cond: LoginUserDto) {
     return this.userRepository.findOne(cond)
+  }
+
+  async search(searchUserDto: SearchUserDto){
+    const qb = this.userRepository.createQueryBuilder('u')
+    qb.limit(searchUserDto.limit || 0)
+    qb.take(searchUserDto.take || 10)
+
+    if(searchUserDto.fullName){
+      qb.andWhere('u.fullName ILIKE :fullName')
+    }
+
+    if(searchUserDto.email){
+      qb.andWhere('u.email ILIKE :email')
+    }
+
+   qb.setParameters({
+     fullName: `%${searchUserDto.fullName}%`,
+     email: `%${searchUserDto.email}%`
+   })
+   const [items, total] = await qb.getManyAndCount()
+   return {items, total}
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
